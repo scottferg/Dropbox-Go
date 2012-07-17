@@ -2,7 +2,7 @@ package account
 
 import (
     "encoding/json"
-    "../session"
+    "github.com/scottferg/Dropbox-Go/session"
 )
 
 type Account struct {

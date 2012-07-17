@@ -3,9 +3,9 @@ package main
 import (
     "fmt"
     "io/ioutil"
-    "./session"
-    "./account"
-    "./files"
+    "github.com/scottferg/Dropbox-Go/session"
+    "github.com/scottferg/Dropbox-Go/account"
+    "github.com/scottferg/Dropbox-Go/files"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package files
 import (
     "encoding/json"
     "fmt"
-    "../session"
+    "github.com/scottferg/Dropbox-Go/session"
 )
 
 const (
