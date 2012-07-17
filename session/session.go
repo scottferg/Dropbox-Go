@@ -64,7 +64,6 @@ func (e AuthError) Error() string {
 }
 
 func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, error) {
-    fmt.Println(url)
     req, err := http.NewRequest(method, url, nil)
 
     var client http.Client
@@ -84,9 +83,7 @@ func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, err
         req.ContentLength = int64(len(file))
     }
 
-    fmt.Println("Blocking")
     resp, err := client.Do(req)
-    fmt.Println("Unblocked!")
 
     if err != nil {
         return nil, err
@@ -131,19 +128,19 @@ func (s *Session) buildAuthHeader() string {
 	return buf.String()
 }
 
-func (s *Session) ObtainRequestToken(t *AccessToken) (token string, err error) {
+func (s *Session) ObtainRequestToken() (token string, err error) {
     if body, err := s.MakeApiRequest("oauth/request_token", POST); err != nil {
         panic(err.Error())
     } else {
         tokens := strings.Split(string(body), "&")
-        t.Secret = strings.Split(tokens[0], "=")[1]
-        t.Key = strings.Split(tokens[1], "=")[1]
+        s.Token.Secret = strings.Split(tokens[0], "=")[1]
+        s.Token.Key = strings.Split(tokens[1], "=")[1]
     }
 
     return
 }
 
-func (s *Session) ObtainAccessToken(t *AccessToken) (token string, err error) {
+func (s *Session) ObtainAccessToken() (token string, err error) {
     body, err := s.MakeApiRequest("oauth/access_token", POST)
     
     if err != nil {
@@ -158,12 +155,12 @@ func (s *Session) ObtainAccessToken(t *AccessToken) (token string, err error) {
     }
         
     tokens := strings.Split(string(body), "&")
-    t.Secret = strings.Split(tokens[0], "=")[1]
-    t.Key = strings.Split(tokens[1], "=")[1]
+    s.Token.Secret = strings.Split(tokens[0], "=")[1]
+    s.Token.Key = strings.Split(tokens[1], "=")[1]
 
     return
 }
 
-func (s *Session) GenerateAuthorizeUrl(requestToken string) string {
+func GenerateAuthorizeUrl(requestToken string) string {
     return fmt.Sprintf("%s?oauth_token=%s", buildWebUrl("oauth/authorize"), requestToken)
 }
