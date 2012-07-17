@@ -8,21 +8,27 @@ import (
     "bytes"
     "strings"
     "io/ioutil"
+    "encoding/json"
 )
 
 var (
     BaseApiUrl = "api.dropbox.com"
+    BaseContentUrl = "api-content.dropbox.com"
     BaseWebUrl = "www.dropbox.com"
 
     ApiVersion = 1
 )
 
 const (
-    GET = iota
-    POST
-    PUT
-    DELETE
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    DELETE = "DELETE"
 )
+
+type AuthError struct {
+    ErrorText string `json:"error"`
+}
 
 type AccessToken struct {
     Key string
@@ -45,26 +51,23 @@ func buildApiUrl(path string) string {
     return fmt.Sprintf("https://%s/%d/%s", BaseApiUrl, ApiVersion, path)
 }
 
+func buildContentApiUrl(path string) string {
+    return fmt.Sprintf("https://%s/%d/%s", BaseContentUrl, ApiVersion, path)
+}
+
 func buildWebUrl(path string) string {
     return fmt.Sprintf("https://%s/%d/%s", BaseWebUrl, ApiVersion, path)
 }
 
-func (s *Session) MakeApiRequest(path string, method int) ([]byte, error) {
+func (e AuthError) Error() string {
+    return e.ErrorText
+}
+
+func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, error) {
+    fmt.Println(url)
+    req, err := http.NewRequest(method, url, nil)
+
     var client http.Client
-
-    var m string
-    switch method {
-    case GET:
-        m = "GET"
-    case POST:
-        m = "POST"
-    case PUT:
-        m = "PUT"
-    case DELETE:
-        m = "DELETE"
-    }
-
-    req, err := http.NewRequest(m, buildApiUrl(path), nil)
 
 	if err != nil {
 		return nil, err
@@ -74,7 +77,16 @@ func (s *Session) MakeApiRequest(path string, method int) ([]byte, error) {
 
     req.Header.Set("Authorization", auth)
 
+    if file != nil {
+        closer := ioutil.NopCloser(bytes.NewReader(file))
+
+        req.Body = closer
+        req.ContentLength = int64(len(file))
+    }
+
+    fmt.Println("Blocking")
     resp, err := client.Do(req)
+    fmt.Println("Unblocked!")
 
     if err != nil {
         return nil, err
@@ -84,6 +96,21 @@ func (s *Session) MakeApiRequest(path string, method int) ([]byte, error) {
     body, err := ioutil.ReadAll(resp.Body)
 
     return body, err
+}
+
+func (s *Session) MakeContentApiRequest(path string, method string) ([]byte, error) {
+    b, e := s.DoRequest(buildContentApiUrl(path), method, nil)
+    return b, e
+}
+
+func (s *Session) MakeApiRequest(path string, method string) ([]byte, error) {
+    b, e := s.DoRequest(buildApiUrl(path), method, nil)
+    return b, e
+}
+
+func (s *Session) MakeUploadRequest(path string, method string, file []byte) ([]byte, error) {
+    b, e := s.DoRequest(buildContentApiUrl(path), method, file)
+    return b, e
 }
 
 func (s *Session) buildAuthHeader() string {
@@ -117,13 +144,22 @@ func (s *Session) ObtainRequestToken(t *AccessToken) (token string, err error) {
 }
 
 func (s *Session) ObtainAccessToken(t *AccessToken) (token string, err error) {
-    if body, err := s.MakeApiRequest("oauth/access_token", POST); err != nil {
-        panic(err.Error())
-    } else {
-        tokens := strings.Split(string(body), "&")
-        t.Secret = strings.Split(tokens[0], "=")[1]
-        t.Key = strings.Split(tokens[1], "=")[1]
+    body, err := s.MakeApiRequest("oauth/access_token", POST)
+    
+    if err != nil {
+        return
     }
+
+    var autherror AuthError
+    err = json.Unmarshal(body, &autherror)
+
+    if autherror.ErrorText != "" {
+        return token, autherror
+    }
+        
+    tokens := strings.Split(string(body), "&")
+    t.Secret = strings.Split(tokens[0], "=")[1]
+    t.Key = strings.Split(tokens[1], "=")[1]
 
     return
 }

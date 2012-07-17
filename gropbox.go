@@ -2,26 +2,53 @@ package main
 
 import (
     "fmt"
+    "io/ioutil"
+    "./session"
+    "./account"
+    "./files"
 )
 
 func main() {
-    s := Session{
+    s := session.Session{
         AppKey: "3bvxdbph6b0vtks",
         AppSecret: "01l0an50qemvz9u",
         AccessType: "app_folder",
+        Token: session.AccessToken{
+            Secret: "a0727z0kybebpzc",
+            Key: "yvrboxjs5benha3",
+        },
     }
 
-    s.Token = AccessToken{
-        Secret: "a0727z0kybebpzc",
-        Key: "yvrboxjs5benha3",
-    }
-
-    a, err := GetAccount(s)
+    a, err := account.GetAccount(s)
 
     if err != nil {
         fmt.Println(err.Error())
     } else {
         fmt.Println(a.ReferralLink)
         fmt.Println(a.DisplayName)
+    }
+
+    file, err := ioutil.ReadFile("./test_form.pdf")
+
+    if err != nil {
+        fmt.Println(err.Error())
+    } else {
+        m, err := files.UploadFile(s, file, files.RootSandbox, "NERDS/test_form.pdf")
+
+        if err != nil {
+            fmt.Println(err.Error())
+        } else {
+            fmt.Println(m)
+        }
+    }
+
+    fmt.Println("\n==========\n")
+
+    m, err := files.GetMetadata(s, files.RootSandbox, "NERDS/test_form.pdf")
+
+    if err != nil {
+        fmt.Println(err.Error())
+    } else {
+        fmt.Println(m)
     }
 }

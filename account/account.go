@@ -2,6 +2,7 @@ package account
 
 import (
     "encoding/json"
+    "../session"
 )
 
 type Account struct {
@@ -16,14 +17,14 @@ type Account struct {
     } `json:"quota_info"`
 }
 
-func GetAccount(s Session) (account Account, err error) {
-    body, err := s.MakeApiRequest("account/info", GET)
+func GetAccount(s session.Session) (a Account, err error) {
+    body, err := s.MakeApiRequest("account/info", session.GET)
     
     if err != nil {
         return
     }
 
-    err = json.Unmarshal(body, &account)
+    err = json.Unmarshal(body, &a)
 
     return
 }
