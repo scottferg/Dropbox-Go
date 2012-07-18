@@ -27,7 +27,7 @@ func main() {
     if file, err := ioutil.ReadFile("./test_form.pdf"); err != nil {
         fmt.Println(err.Error())
     } else {
-        m, err := files.UploadFile(s, file, uriPath)
+        m, err := files.UploadFile(s, file, uriPath, nil)
 
         if err != nil {
             fmt.Println(err.Error())
@@ -35,7 +35,7 @@ func main() {
     }
 
     // Download the file
-    if file, _, err := files.GetFile(s, uriPath); err == nil {
+    if file, _, err := files.GetFile(s, uriPath, nil); err == nil {
         ioutil.WriteFile("./test_result.pdf", file, os.ModePerm)
     } else {
         fmt.Println(err.Error())
