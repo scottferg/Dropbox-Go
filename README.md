@@ -64,7 +64,11 @@ Any irrelevant parameters will be ignored in the request.
 ## API Documentation:
 
 http://go.pkgdoc.org/github.com/scottferg/Dropbox-Go/files
+
 http://go.pkgdoc.org/github.com/scottferg/Dropbox-Go/fileops
+
 http://go.pkgdoc.org/github.com/scottferg/Dropbox-Go/account
+
 http://go.pkgdoc.org/github.com/scottferg/Dropbox-Go/session
+
 http://go.pkgdoc.org/github.com/scottferg/Dropbox-Go/api
