@@ -5,6 +5,10 @@ import (
     "github.com/scottferg/Dropbox-Go/session"
 )
 
+type Parameters struct {
+    Locale string
+}
+
 type Account struct {
     ReferralLink string `json:"referral_link"`
     DisplayName  string `json:"display_name"`
@@ -17,11 +21,13 @@ type Account struct {
     } `json:"quota_info"`
 }
 
-func GetAccount(s session.Session, locale string) (a Account, err error) {
+func GetAccount(s session.Session, p *Parameters) (a Account, err error) {
     params := make(map[string]string)
 
-    if locale != "" {
-        params["locale"] = locale
+    if p != nil {
+        if p.Locale != "" {
+            params["locale"] = p.Locale
+        }
     }
 
     body, _, err := s.MakeApiRequest("account/info", params, session.GET)
