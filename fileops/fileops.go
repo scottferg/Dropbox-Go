@@ -2,6 +2,7 @@ package fileops
 
 import (
     "encoding/json"
+    "github.com/scottferg/Dropbox-Go/api"
     "github.com/scottferg/Dropbox-Go/files"
     "github.com/scottferg/Dropbox-Go/session"
 )
