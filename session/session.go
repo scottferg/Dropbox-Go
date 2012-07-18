@@ -30,6 +30,11 @@ type AuthError struct {
     ErrorText string `json:"error"`
 }
 
+type Parameters {
+    OAuthCallback string
+    Locale string
+}
+
 type AccessToken struct {
     Key string
     Secret string
@@ -187,18 +192,20 @@ func (s *Session) ObtainAccessToken() (token string, err error) {
     return
 }
 
-func GenerateAuthorizeUrl(requestToken string, oauth_callback string, locale string) (r string) {
+func GenerateAuthorizeUrl(requestToken string, p *Parameters) (r string) {
     r = fmt.Sprintf("%s?oauth_token=%s", buildWebUrl("oauth/authorize"), requestToken) 
 
     var buf bytes.Buffer
     buf.WriteString(r)
 
-    if oauth_callback != "" {
-        fmt.Fprintf(&buf, "&oauth_callback=%s", oauth_callback)
-    }
+    if p != nil {
+        if p.OAuthCallback != "" {
+            fmt.Fprintf(&buf, "&oauth_callback=%s", p.OAuthCallback)
+        }
 
-    if locale != "" {
-        fmt.Fprintf(&buf, "&locale=%s", locale)
+        if p.Locale != "" {
+            fmt.Fprintf(&buf, "&locale=%s", p.Locale)
+        }
     }
 
     r = buf.String()
