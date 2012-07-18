@@ -30,7 +30,7 @@ type AuthError struct {
     ErrorText string `json:"error"`
 }
 
-type Parameters {
+type Parameters struct {
     OAuthCallback string
     Locale string
 }
