@@ -39,5 +39,24 @@ Your session is now authorized to make requests.
 
 ## Making Requests
 
-All API methods take API parameters as parameters to the function. If a method isn't required simply
-passing an empty string value will ignore it.
+Most API methods take a series of optional parameters. These parameters should be sent in an instance of a
+package.Parameters struct (where package is files, fileops, account). If you do not wish to send any optional
+parameters, just pass nil for that argument. All required parameters are part of the function signature:
+
+        p := files.Parameters{
+            Rev: "01b3f45a",
+            FileLimit: "50",
+        }
+
+        u := api.Uri{
+            Root: "sandbox",
+            Path: "path/to/my/file.pdf",
+        }
+
+        files.GetMetadata(s, u, p) // sup?
+
+Or:
+
+        file.GetMetadata(s, u, nil)
+
+Any irrelevant parameters will be ignored in the request.
