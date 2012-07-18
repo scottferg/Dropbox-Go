@@ -1,14 +1,12 @@
+// Package files provides API methods for managing and uploading
+// individual files
 package files
 
 import (
     "encoding/json"
     "fmt"
     "github.com/scottferg/Dropbox-Go/session"
-)
-
-const (
-    RootSandbox = "sandbox"
-    RootDropbox = "dropbox"
+    "github.com/scottferg/Dropbox-Go/api"
 )
 
 type FileError struct {
@@ -45,12 +43,63 @@ type Metadata struct {
     Revision    int        `json:"revision"`
 }
 
+type Revision struct {
+    IsDeleted   bool `json:"is_deleted"`
+    Revision    int        `json:"revision"`
+    Rev         string     `json:"rev"`
+    ThumbExists bool       `json:"thumb_exists"`
+    Bytes       int        `json:"bytes"`
+    Modified    string     `json:"modified"`
+    Path        string     `json:"path"`
+    IsDir       bool       `json:"is_dir"`
+    Icon        string     `json:"icon"`
+    Root        string     `json:"root"`
+    MimeType    string `json:"mime_type"`
+    Size        string     `json:"size"`
+}
+
+type ShareUrl struct {
+    Url     string `json:"url"`
+    Expires string `json:"expires"`
+}
+
+type CopyHash struct {
+    CopyRef string `json:"copy_ref"`
+    Expires string `json:"expires"`
+}
+
 func (e FileError) Error() string {
     return e.ErrorText
 }
 
-func GetFile(s session.Session, root string, path string) (m Metadata, err error) {
-    body, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", root, path), session.GET)
+// GetFile retrieves the metadata for the file at the specified path,
+// or the metadata for that path.
+func GetFile(s session.Session, uri api.Uri) (m Metadata, err error) {
+    body, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), session.GET)
+
+    if err != nil {
+        return
+    }
+
+    var fe FileError
+    err = json.Unmarshal(body, &fe)
+
+    if fe.ErrorText != "" {
+        err = fe
+        return
+    }
+
+    err = json.Unmarshal(body, &m)
+
+    // TODO: File metadata is in header, body is file
+
+    return
+}
+
+// UploadFile uploads the file to the specified path.  The file's metadata is
+// returned as a result.
+func UploadFile(s session.Session, file []byte, uri api.Uri) (m Metadata, err error) {
+    body, err := s.MakeUploadRequest(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path), session.PUT, file)
 
     if err != nil {
         return
@@ -69,8 +118,9 @@ func GetFile(s session.Session, root string, path string) (m Metadata, err error
     return
 }
 
-func UploadFile(s session.Session, file []byte, root string, path string) (m Metadata, err error) {
-    body, err := s.MakeUploadRequest(fmt.Sprintf("files_put/%s/%s", root, path), session.PUT, file)
+// GetMetadata returns the metadata for the specified path.
+func GetMetadata(s session.Session, uri api.Uri) (m Metadata, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), session.GET)
 
     if err != nil {
         return
@@ -89,8 +139,8 @@ func UploadFile(s session.Session, file []byte, root string, path string) (m Met
     return
 }
 
-func GetMetadata(s session.Session, root string, path string) (m Metadata, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", root, path), session.GET)
+func GetRevisions(s session.Session, uri api.Uri) (m []Revision, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), session.GET)
 
     if err != nil {
         return
@@ -105,6 +155,107 @@ func GetMetadata(s session.Session, root string, path string) (m Metadata, err e
     }
 
     err = json.Unmarshal(body, &m)
+
+    return
+}
+
+func RestoreFile(s session.Session, uri api.Uri, rev string) (m Metadata, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s?rev=%s", uri.Root, uri.Path, rev), session.POST)
+
+    if err != nil {
+        return
+    }
+
+    var fe FileError
+    err = json.Unmarshal(body, &fe)
+
+    if fe.ErrorText != "" {
+        err = fe
+        return
+    }
+
+    err = json.Unmarshal(body, &m)
+
+    return
+}
+
+func Search(s session.Session, uri api.Uri, query string) (m []Revision, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), session.POST)
+
+    fmt.Println(string(body))
+    if err != nil {
+        return
+    }
+
+    var fe FileError
+    err = json.Unmarshal(body, &fe)
+
+    if fe.ErrorText != "" {
+        err = fe
+        return
+    }
+
+    err = json.Unmarshal(body, &m)
+
+    return
+}
+
+func Share(s session.Session, uri api.Uri) (u ShareUrl, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), session.POST)
+
+    if err != nil {
+        return
+    }
+
+    var fe FileError
+    err = json.Unmarshal(body, &fe)
+
+    if fe.ErrorText != "" {
+        err = fe
+        return
+    }
+
+    err = json.Unmarshal(body, &u)
+
+    return
+}
+
+func Media(s session.Session, uri api.Uri) (u ShareUrl, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), session.POST)
+
+    if err != nil {
+        return
+    }
+
+    var fe FileError
+    err = json.Unmarshal(body, &fe)
+
+    if fe.ErrorText != "" {
+        err = fe
+        return
+    }
+
+    err = json.Unmarshal(body, &u)
+
+    return
+}
+
+func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
+    body, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), session.GET)
+
+    if err != nil {
+        return
+    }
+
+    var fe FileError
+    err = json.Unmarshal(body, &fe)
+
+    if fe.ErrorText != "" {
+        err = fe
+        return
+    }
+
+    err = json.Unmarshal(body, &c)
 
     return
 }
