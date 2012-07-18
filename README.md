@@ -3,6 +3,10 @@ Dropbox-Go
 
 Go library for the Dropbox API
 
+## Setup
+
+        go get -u github.com/scottferg/Dropbox-Go/...
+
 ## Authentication
 
 The Dropbox API uses OAuth for it's authentication mechanism. You can authenticate
