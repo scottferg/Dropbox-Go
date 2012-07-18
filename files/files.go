@@ -14,6 +14,21 @@ type FileError struct {
     ErrorText string `json:"error"`
 }
 
+type Parameters struct {
+    Rev string
+    Locale string
+    Overwrite string
+    ParentRev string
+    FileLimit string
+    Hash string
+    List string
+    IncludeDeleted string
+    RevLimit string
+    ShortUrl string
+    Format string
+    Size string
+}
+
 type Contents struct {
     Size        string `json:"size"`
     Rev         string `json:"rev"`
@@ -75,11 +90,11 @@ func (e FileError) Error() string {
 
 // GetFile retrieves the metadata for the file at the specified path,
 // or the metadata for that path.
-func GetFile(s session.Session, uri api.Uri, rev string) (file []byte, m Metadata, err error) {
+func GetFile(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Metadata, err error) {
     params := make(map[string]string)
 
-    if rev != "" {
-        params["rev"] = rev
+    if p.Rev != "" {
+        params["rev"] = p.Rev
     }
 
     file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), params, session.GET)
@@ -97,27 +112,27 @@ func GetFile(s session.Session, uri api.Uri, rev string) (file []byte, m Metadat
 
 // UploadFile uploads the file to the specified path.  The file's metadata is
 // returned as a result.
-func UploadFile(s session.Session, file []byte, uri api.Uri, locale string, overwrite string, parent_rev string) (m Metadata, err error) {
+func UploadFile(s session.Session, file []byte, uri api.Uri, p *Parameters) (m Metadata, err error) {
 
     // Upload method requires that all params are sent in the query string, so we'll set them up here rather
     // than letting the session set them
     var buf bytes.Buffer
     buf.WriteString(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path))
 
-    if locale != "" || overwrite != "" || parent_rev != "" {
+    if p != nil {
         fmt.Fprint(&buf, "?")
-    }
 
-    if locale != "" {
-        fmt.Fprintf(&buf, "&locale=%s", locale)
-    }
+        if p.Locale != "" {
+            fmt.Fprintf(&buf, "&locale=%s", p.Locale)
+        }
 
-    if overwrite != "" {
-        fmt.Fprintf(&buf, "&overwrite=%s", overwrite)
-    }
+        if p.Overwrite != "" {
+            fmt.Fprintf(&buf, "&overwrite=%s", p.Overwrite)
+        }
 
-    if parent_rev != "" {
-        fmt.Fprintf(&buf, "&parent_rev=%s", parent_rev)
+        if p.ParentRev != "" {
+            fmt.Fprintf(&buf, "&parent_rev=%s", p.ParentRev)
+        }
     }
 
     body, _, err := s.MakeUploadRequest(buf.String(), nil, session.PUT, file)
@@ -140,31 +155,33 @@ func UploadFile(s session.Session, file []byte, uri api.Uri, locale string, over
 }
 
 // GetMetadata returns the metadata for the specified path.
-func GetMetadata(s session.Session, uri api.Uri, file_limit string, hash string, list string, include_deleted string, rev string, locale string) (m Metadata, err error) {
+func GetMetadata(s session.Session, uri api.Uri, p *Parameters) (m Metadata, err error) {
     params := make(map[string]string)
 
-    if file_limit != "" {
-        params["file_limit"] = file_limit
-    }
+    if p != nil {
+        if p.FileLimit != "" {
+            params["file_limit"] = p.FileLimit
+        }
 
-    if hash != "" {
-        params["hash"] = hash
-    }
+        if p.Hash != "" {
+            params["hash"] = p.Hash
+        }
 
-    if list != "" {
-        params["list"] = list
-    }
+        if p.List != "" {
+            params["list"] = p.List
+        }
 
-    if include_deleted != "" {
-        params["include_deleted"] = include_deleted
-    }
+        if p.IncludeDeleted != "" {
+            params["include_deleted"] = p.IncludeDeleted
+        }
 
-    if rev != "" {
-        params["rev"] = rev
-    }
+        if p.Rev != "" {
+            params["rev"] = p.Rev
+        }
 
-    if locale != "" {
-        params["locale"] = locale
+        if p.Locale != "" {
+            params["locale"] = p.Locale
+        }
     }
 
     body, _, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), params, session.GET)
@@ -186,15 +203,17 @@ func GetMetadata(s session.Session, uri api.Uri, file_limit string, hash string,
     return
 }
 
-func GetRevisions(s session.Session, uri api.Uri, rev_limit string, locale string) (m []Revision, err error) {
+func GetRevisions(s session.Session, uri api.Uri, p *Parameters) (m []Revision, err error) {
     params := make(map[string]string)
 
-    if rev_limit != "" {
-        params["rev_limit"] = rev_limit
-    }
+    if p != nil {
+        if p.RevLimit != "" {
+            params["rev_limit"] = p.RevLimit
+        }
 
-    if locale != "" {
-        params["locale"] = locale
+        if p.Locale != "" {
+            params["locale"] = p.Locale
+        }
     }
 
     body, _, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), params, session.GET)
@@ -216,13 +235,15 @@ func GetRevisions(s session.Session, uri api.Uri, rev_limit string, locale strin
     return
 }
 
-func RestoreFile(s session.Session, uri api.Uri, rev string, locale string) (m Metadata, err error) {
+func RestoreFile(s session.Session, uri api.Uri, rev string, p *Parameters) (m Metadata, err error) {
     params := map[string]string {
         "rev": rev,
     }
 
-    if locale != "" {
-        params["locale"] = locale
+    if p != nil {
+        if p.Locale != "" {
+            params["locale"] = p.Locale
+        }
     }
 
     body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s", uri.Root, uri.Path), params, session.POST)
@@ -247,7 +268,6 @@ func RestoreFile(s session.Session, uri api.Uri, rev string, locale string) (m M
 func Search(s session.Session, uri api.Uri, query string) (m []Revision, err error) {
     body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), nil, session.POST)
 
-    fmt.Println(string(body))
     if err != nil {
         return
     }
@@ -265,15 +285,17 @@ func Search(s session.Session, uri api.Uri, query string) (m []Revision, err err
     return
 }
 
-func Share(s session.Session, uri api.Uri, locale string, short_url string) (u ShareUrl, err error) {
+func Share(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error) {
     params := make(map[string]string)
 
-    if locale != "" {
-        params["locale"] = locale
-    }
+    if p != nil {
+        if p.Locale != "" {
+            params["locale"] = p.Locale
+        }
 
-    if short_url != "" {
-        params["short_url"] = short_url
+        if p.ShortUrl != "" {
+            params["short_url"] = p.ShortUrl
+        }
     }
 
     body, _, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), params, session.POST)
@@ -295,11 +317,13 @@ func Share(s session.Session, uri api.Uri, locale string, short_url string) (u S
     return
 }
 
-func Media(s session.Session, uri api.Uri, locale string) (u ShareUrl, err error) {
+func Media(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error) {
     params := make(map[string]string)
 
-    if locale != "" {
-        params["locale"] = locale
+    if p != nil {
+        if p.Locale != "" {
+            params["locale"] = p.Locale
+        }
     }
 
     body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), params, session.POST)
@@ -341,15 +365,17 @@ func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
     return
 }
 
-func Thumbnail(s session.Session, uri api.Uri, format string, size string) (file []byte, m Metadata, err error) {
+func Thumbnail(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Metadata, err error) {
     params := make(map[string]string)
 
-    if format != "" {
-        params["format"] = format
-    }
+    if p != nil {
+        if p.Format != "" {
+            params["format"] = p.Format
+        }
 
-    if size != "" {
-        params["size"] = size
+        if p.Size != "" {
+            params["size"] = p.Size
+        }
     }
 
     file, header, err := s.MakeContentApiRequest(fmt.Sprintf("thumbnails/%s/%s", uri.Root, uri.Path), params, session.GET)
