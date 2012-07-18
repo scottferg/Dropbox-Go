@@ -63,8 +63,32 @@ func (e AuthError) Error() string {
     return e.ErrorText
 }
 
-func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, http.Header, error) {
-    req, err := http.NewRequest(method, url, nil)
+func (s *Session) DoRequest(path string, params map[string]string, method string, file []byte) ([]byte, http.Header, error) {
+    if method == GET && params != nil {
+        var buf bytes.Buffer
+
+        buf.WriteString(path)
+        fmt.Fprintf(&buf, "?")
+
+        for key,val := range params {
+            fmt.Fprintf(&buf, "&%s=%s", key, val)
+        }
+
+        path = buf.String()
+        fmt.Println(path)
+    }
+
+    req, err := http.NewRequest(method, path, nil)
+
+    if method == POST && params != nil {
+        form := make(url.Values)
+
+        for key,val := range params {
+            form.Set(key, val)
+        }
+
+        req.Form = form
+    }
 
     var client http.Client
 
@@ -97,18 +121,18 @@ func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, htt
     return body, resp.Header, err
 }
 
-func (s *Session) MakeContentApiRequest(path string, method string) (b []byte, h http.Header, e error) {
-    b, h, e = s.DoRequest(buildContentApiUrl(path), method, nil)
+func (s *Session) MakeContentApiRequest(path string, params map[string]string, method string) (b []byte, h http.Header, e error) {
+    b, h, e = s.DoRequest(buildContentApiUrl(path), params, method, nil)
     return
 }
 
-func (s *Session) MakeApiRequest(path string, method string) (b []byte, h http.Header, e error) {
-    b, h, e = s.DoRequest(buildApiUrl(path), method, nil)
+func (s *Session) MakeApiRequest(path string, params map[string]string, method string) (b []byte, h http.Header, e error) {
+    b, h, e = s.DoRequest(buildApiUrl(path), params, method, nil)
     return
 }
 
-func (s *Session) MakeUploadRequest(path string, method string, file []byte) (b []byte, h http.Header, e error) {
-    b, h, e = s.DoRequest(buildContentApiUrl(path), method, file)
+func (s *Session) MakeUploadRequest(path string, params map[string]string, method string, file []byte) (b []byte, h http.Header, e error) {
+    b, h, e = s.DoRequest(buildContentApiUrl(path), params, method, file)
     return
 }
 
@@ -131,7 +155,7 @@ func (s *Session) buildAuthHeader() string {
 }
 
 func (s *Session) ObtainRequestToken() (token string, err error) {
-    if body, _, err := s.MakeApiRequest("oauth/request_token", POST); err != nil {
+    if body, _, err := s.MakeApiRequest("oauth/request_token", nil, POST); err != nil {
         panic(err.Error())
     } else {
         tokens := strings.Split(string(body), "&")
@@ -143,7 +167,7 @@ func (s *Session) ObtainRequestToken() (token string, err error) {
 }
 
 func (s *Session) ObtainAccessToken() (token string, err error) {
-    body, _, err := s.MakeApiRequest("oauth/access_token", POST)
+    body, _, err := s.MakeApiRequest("oauth/access_token", nil, POST)
     
     if err != nil {
         return
@@ -163,6 +187,21 @@ func (s *Session) ObtainAccessToken() (token string, err error) {
     return
 }
 
-func GenerateAuthorizeUrl(requestToken string) string {
-    return fmt.Sprintf("%s?oauth_token=%s", buildWebUrl("oauth/authorize"), requestToken)
+func GenerateAuthorizeUrl(requestToken string, oauth_callback string, locale string) (r string) {
+    r = fmt.Sprintf("%s?oauth_token=%s", buildWebUrl("oauth/authorize"), requestToken) 
+
+    var buf bytes.Buffer
+    buf.WriteString(r)
+
+    if oauth_callback != "" {
+        fmt.Fprintf(&buf, "&oauth_callback=%s", oauth_callback)
+    }
+
+    if locale != "" {
+        fmt.Fprintf(&buf, "&locale=%s", locale)
+    }
+
+    r = buf.String()
+
+    return 
 }

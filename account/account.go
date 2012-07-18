@@ -17,8 +17,14 @@ type Account struct {
     } `json:"quota_info"`
 }
 
-func GetAccount(s session.Session) (a Account, err error) {
-    body, _, err := s.MakeApiRequest("account/info", session.GET)
+func GetAccount(s session.Session, locale string) (a Account, err error) {
+    params := make(map[string]string)
+
+    if locale != "" {
+        params["locale"] = locale
+    }
+
+    body, _, err := s.MakeApiRequest("account/info", params, session.GET)
     
     if err != nil {
         return

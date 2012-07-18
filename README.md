@@ -36,3 +36,8 @@ much like you obtained the request token:
         s.ObtainAccessToken()
 
 Your session is now authorized to make requests.
+
+## Making Requests
+
+All API methods take API parameters as parameters to the function. If a method isn't required simply
+passing an empty string value will ignore it.
