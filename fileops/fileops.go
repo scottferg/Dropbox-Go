@@ -1,7 +1,9 @@
 package fileops
 
 import (
+    "encoding/json"
     "github.com/scottferg/Dropbox-Go/files"
+    "github.com/scottferg/Dropbox-Go/session"
 )
 
 type Parameters struct {
