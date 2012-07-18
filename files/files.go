@@ -7,6 +7,7 @@ import (
     "fmt"
     "github.com/scottferg/Dropbox-Go/session"
     "github.com/scottferg/Dropbox-Go/api"
+    "bytes"
 )
 
 type FileError struct {
@@ -74,24 +75,16 @@ func (e FileError) Error() string {
 
 // GetFile retrieves the metadata for the file at the specified path,
 // or the metadata for that path.
-func GetFile(s session.Session, uri api.Uri) (m Metadata, err error) {
-    body, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), session.GET)
+func GetFile(s session.Session, uri api.Uri) (file []byte, m Metadata, err error) {
+    file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), session.GET)
 
     if err != nil {
         return
     }
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
-
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
-
-    err = json.Unmarshal(body, &m)
-
-    // TODO: File metadata is in header, body is file
+    // File metadata is in header, body is file
+    buf := bytes.NewBufferString(header.Get("x-dropbox-metadata"))
+    err = json.Unmarshal(buf.Bytes(), &m)
 
     return
 }
@@ -99,7 +92,7 @@ func GetFile(s session.Session, uri api.Uri) (m Metadata, err error) {
 // UploadFile uploads the file to the specified path.  The file's metadata is
 // returned as a result.
 func UploadFile(s session.Session, file []byte, uri api.Uri) (m Metadata, err error) {
-    body, err := s.MakeUploadRequest(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path), session.PUT, file)
+    body, _, err := s.MakeUploadRequest(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path), session.PUT, file)
 
     if err != nil {
         return
@@ -120,7 +113,7 @@ func UploadFile(s session.Session, file []byte, uri api.Uri) (m Metadata, err er
 
 // GetMetadata returns the metadata for the specified path.
 func GetMetadata(s session.Session, uri api.Uri) (m Metadata, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), session.GET)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), session.GET)
 
     if err != nil {
         return
@@ -140,7 +133,7 @@ func GetMetadata(s session.Session, uri api.Uri) (m Metadata, err error) {
 }
 
 func GetRevisions(s session.Session, uri api.Uri) (m []Revision, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), session.GET)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), session.GET)
 
     if err != nil {
         return
@@ -160,7 +153,7 @@ func GetRevisions(s session.Session, uri api.Uri) (m []Revision, err error) {
 }
 
 func RestoreFile(s session.Session, uri api.Uri, rev string) (m Metadata, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s?rev=%s", uri.Root, uri.Path, rev), session.POST)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s?rev=%s", uri.Root, uri.Path, rev), session.POST)
 
     if err != nil {
         return
@@ -180,7 +173,7 @@ func RestoreFile(s session.Session, uri api.Uri, rev string) (m Metadata, err er
 }
 
 func Search(s session.Session, uri api.Uri, query string) (m []Revision, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), session.POST)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), session.POST)
 
     fmt.Println(string(body))
     if err != nil {
@@ -201,7 +194,7 @@ func Search(s session.Session, uri api.Uri, query string) (m []Revision, err err
 }
 
 func Share(s session.Session, uri api.Uri) (u ShareUrl, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), session.POST)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), session.POST)
 
     if err != nil {
         return
@@ -221,7 +214,7 @@ func Share(s session.Session, uri api.Uri) (u ShareUrl, err error) {
 }
 
 func Media(s session.Session, uri api.Uri) (u ShareUrl, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), session.POST)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), session.POST)
 
     if err != nil {
         return
@@ -241,7 +234,7 @@ func Media(s session.Session, uri api.Uri) (u ShareUrl, err error) {
 }
 
 func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
-    body, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), session.GET)
+    body, _, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), session.GET)
 
     if err != nil {
         return
@@ -256,6 +249,20 @@ func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
     }
 
     err = json.Unmarshal(body, &c)
+
+    return
+}
+
+func Thumbnail(s session.Session, uri api.Uri) (file []byte, m Metadata, err error) {
+    file, header, err := s.MakeContentApiRequest(fmt.Sprintf("thumbnails/%s/%s", uri.Root, uri.Path), session.GET)
+
+    if err != nil {
+        return
+    }
+
+    // File metadata is in header, body is file
+    buf := bytes.NewBufferString(header.Get("x-dropbox-metadata"))
+    err = json.Unmarshal(buf.Bytes(), &m)
 
     return
 }

@@ -18,7 +18,7 @@ type Account struct {
 }
 
 func GetAccount(s session.Session) (a Account, err error) {
-    body, err := s.MakeApiRequest("account/info", session.GET)
+    body, _, err := s.MakeApiRequest("account/info", session.GET)
     
     if err != nil {
         return

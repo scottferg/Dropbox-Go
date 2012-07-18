@@ -5,7 +5,7 @@ import (
 )
 
 func Copy(s session.Session, root string, to_path string, from_path string, locale string, from_copy_ref string) (c files.Contents, err error) {
-    body, err := s.MakeApiRequest("fileops/copy", session.POST)
+    body, _, err := s.MakeApiRequest("fileops/copy", session.POST)
 
     if err != nil {
         return
@@ -25,7 +25,7 @@ func Copy(s session.Session, root string, to_path string, from_path string, loca
 }
 
 func CreateFolder(s session.Session, uri api.Uri, locale string) (m files.Metadata, err error) {
-    body, err := s.MakeApiRequest("fileops/create_folder", session.POST)
+    body, _, err := s.MakeApiRequest("fileops/create_folder", session.POST)
 
     if err != nil {
         return
@@ -45,7 +45,7 @@ func CreateFolder(s session.Session, uri api.Uri, locale string) (m files.Metada
 }
 
 func Delete(s session.Session, uri api.Uri, locale string) (m files.Metadata, err error) {
-    body, err := s.MakeApiRequest("fileops/delete", session.POST)
+    body, _, err := s.MakeApiRequest("fileops/delete", session.POST)
 
     if err != nil {
         return
@@ -65,7 +65,7 @@ func Delete(s session.Session, uri api.Uri, locale string) (m files.Metadata, er
 }
 
 func Move(s session.Session, uri api.Uri, root string, from_path string, to_path string, locale string) (m files.Metadata, err error) {
-    body, err := s.MakeApiRequest("fileops/move", session.POST)
+    body, _, err := s.MakeApiRequest("fileops/move", session.POST)
 
     if err != nil {
         return

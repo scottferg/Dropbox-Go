@@ -63,13 +63,14 @@ func (e AuthError) Error() string {
     return e.ErrorText
 }
 
-func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, error) {
+func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, http.Header, error) {
     req, err := http.NewRequest(method, url, nil)
 
     var client http.Client
 
 	if err != nil {
-		return nil, err
+        fmt.Println(err.Error())
+		return nil, nil, err
 	}
 
     auth := s.buildAuthHeader()
@@ -86,28 +87,29 @@ func (s *Session) DoRequest(url string, method string, file []byte) ([]byte, err
     resp, err := client.Do(req)
 
     if err != nil {
-        return nil, err
+        fmt.Println(err.Error())
+        return nil, nil, err
     }
 
     defer resp.Body.Close()
     body, err := ioutil.ReadAll(resp.Body)
 
-    return body, err
+    return body, resp.Header, err
 }
 
-func (s *Session) MakeContentApiRequest(path string, method string) ([]byte, error) {
-    b, e := s.DoRequest(buildContentApiUrl(path), method, nil)
-    return b, e
+func (s *Session) MakeContentApiRequest(path string, method string) (b []byte, h http.Header, e error) {
+    b, h, e = s.DoRequest(buildContentApiUrl(path), method, nil)
+    return
 }
 
-func (s *Session) MakeApiRequest(path string, method string) ([]byte, error) {
-    b, e := s.DoRequest(buildApiUrl(path), method, nil)
-    return b, e
+func (s *Session) MakeApiRequest(path string, method string) (b []byte, h http.Header, e error) {
+    b, h, e = s.DoRequest(buildApiUrl(path), method, nil)
+    return
 }
 
-func (s *Session) MakeUploadRequest(path string, method string, file []byte) ([]byte, error) {
-    b, e := s.DoRequest(buildContentApiUrl(path), method, file)
-    return b, e
+func (s *Session) MakeUploadRequest(path string, method string, file []byte) (b []byte, h http.Header, e error) {
+    b, h, e = s.DoRequest(buildContentApiUrl(path), method, file)
+    return
 }
 
 func (s *Session) buildAuthHeader() string {
@@ -129,7 +131,7 @@ func (s *Session) buildAuthHeader() string {
 }
 
 func (s *Session) ObtainRequestToken() (token string, err error) {
-    if body, err := s.MakeApiRequest("oauth/request_token", POST); err != nil {
+    if body, _, err := s.MakeApiRequest("oauth/request_token", POST); err != nil {
         panic(err.Error())
     } else {
         tokens := strings.Split(string(body), "&")
@@ -141,7 +143,7 @@ func (s *Session) ObtainRequestToken() (token string, err error) {
 }
 
 func (s *Session) ObtainAccessToken() (token string, err error) {
-    body, err := s.MakeApiRequest("oauth/access_token", POST)
+    body, _, err := s.MakeApiRequest("oauth/access_token", POST)
     
     if err != nil {
         return
