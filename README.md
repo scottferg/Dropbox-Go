@@ -9,6 +9,7 @@ Go library for the Dropbox API
         $ go get -u github.com/scottferg/Dropbox-Go/account
         $ go get -u github.com/scottferg/Dropbox-Go/files
         $ go get -u github.com/scottferg/Dropbox-Go/fileops
+        $ go get -u github.com/scottferg/Dropbox-Go/api
 
 ## Authentication
 
