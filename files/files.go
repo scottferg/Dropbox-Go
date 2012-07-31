@@ -3,390 +3,436 @@
 package files
 
 import (
-    "encoding/json"
-    "fmt"
-    "github.com/scottferg/Dropbox-Go/session"
-    "github.com/scottferg/Dropbox-Go/api"
-    "bytes"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/scottferg/Dropbox-Go/api"
+	"github.com/scottferg/Dropbox-Go/session"
 )
 
 type FileError struct {
-    ErrorText string `json:"error"`
+	ErrorText string `json:"error"`
 }
 
 type Parameters struct {
-    Rev string
-    Locale string
-    Overwrite string
-    ParentRev string
-    FileLimit string
-    Hash string
-    List string
-    IncludeDeleted string
-    RevLimit string
-    ShortUrl string
-    Format string
-    Size string
+	Rev            string
+	Locale         string
+	Overwrite      string
+	ParentRev      string
+	FileLimit      string
+	Hash           string
+	List           string
+	Cursor         string
+	IncludeDeleted string
+	RevLimit       string
+	ShortUrl       string
+	Format         string
+	Size           string
 }
 
 type Contents struct {
-    Size        string `json:"size"`
-    Rev         string `json:"rev"`
-    ThumbExists bool   `json:"thumb_exists"`
-    Bytes       int    `json:"bytes"`
-    Modified    string `json:"modified"`
-    ClientMTime string `json:"client_mtime"`
-    Path        string `json:"path"`
-    IsDir       bool   `json:"is_dir"`
-    Icon        string `json:"icon"`
-    Root        string `json:"root"`
-    MimeType    string `json:"mime_type"`
-    Revision    int    `json:"revision"`
+	Size        string `json:"size"`
+	Rev         string `json:"rev"`
+	ThumbExists bool   `json:"thumb_exists"`
+	Bytes       int    `json:"bytes"`
+	Modified    string `json:"modified"`
+	ClientMTime string `json:"client_mtime"`
+	Path        string `json:"path"`
+	IsDir       bool   `json:"is_dir"`
+	Icon        string `json:"icon"`
+	Root        string `json:"root"`
+	MimeType    string `json:"mime_type"`
+	Revision    int    `json:"revision"`
 }
 
 type Metadata struct {
-    Size        string     `json:"size"`
-    Hash        string     `json:"hash"`
-    Bytes       int        `json:"bytes"`
-    ThumbExists bool       `json:"thumb_exists"`
-    Rev         string     `json:"rev"`
-    Modified    string     `json:"modified"`
-    Path        string     `json:"path"`
-    IsDir       bool       `json:"is_dir"`
-    Icon        string     `json:"icon"`
-    Root        string     `json:"root"`
-    Contents    []Contents `json:"contents"`
-    Revision    int        `json:"revision"`
+	Size        string     `json:"size"`
+	Hash        string     `json:"hash"`
+	Bytes       int        `json:"bytes"`
+	ThumbExists bool       `json:"thumb_exists"`
+	Rev         string     `json:"rev"`
+	Modified    string     `json:"modified"`
+	Path        string     `json:"path"`
+	IsDir       bool       `json:"is_dir"`
+	Icon        string     `json:"icon"`
+	Root        string     `json:"root"`
+	Contents    []Contents `json:"contents"`
+	Revision    int        `json:"revision"`
 }
 
 type Revision struct {
-    IsDeleted   bool `json:"is_deleted"`
-    Revision    int        `json:"revision"`
-    Rev         string     `json:"rev"`
-    ThumbExists bool       `json:"thumb_exists"`
-    Bytes       int        `json:"bytes"`
-    Modified    string     `json:"modified"`
-    Path        string     `json:"path"`
-    IsDir       bool       `json:"is_dir"`
-    Icon        string     `json:"icon"`
-    Root        string     `json:"root"`
-    MimeType    string `json:"mime_type"`
-    Size        string     `json:"size"`
+	IsDeleted   bool   `json:"is_deleted"`
+	Revision    int    `json:"revision"`
+	Rev         string `json:"rev"`
+	ThumbExists bool   `json:"thumb_exists"`
+	Bytes       int    `json:"bytes"`
+	Modified    string `json:"modified"`
+	Path        string `json:"path"`
+	IsDir       bool   `json:"is_dir"`
+	Icon        string `json:"icon"`
+	Root        string `json:"root"`
+	MimeType    string `json:"mime_type"`
+	Size        string `json:"size"`
 }
 
 type ShareUrl struct {
-    Url     string `json:"url"`
-    Expires string `json:"expires"`
+	Url     string `json:"url"`
+	Expires string `json:"expires"`
 }
 
 type CopyHash struct {
-    CopyRef string `json:"copy_ref"`
-    Expires string `json:"expires"`
+	CopyRef string `json:"copy_ref"`
+	Expires string `json:"expires"`
+}
+
+type DeltaEntry struct {
+	Path     string   `json:"0"`
+	Metadata Metadata `json:"1"`
+}
+
+type Delta struct {
+	Reset   bool         `json:"reset"`
+	HasMore bool         `json:"has_more"`
+	Cursor  string       `json:"cursor"`
+	Entries []DeltaEntry `json:"entries"`
 }
 
 func (e FileError) Error() string {
-    return e.ErrorText
+	return e.ErrorText
 }
 
 // GetFile retrieves the metadata for the file at the specified path,
 // or the metadata for that path.
 func GetFile(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Metadata, err error) {
-    params := make(map[string]string)
+	params := make(map[string]string)
 
-    if p.Rev != "" {
-        params["rev"] = p.Rev
-    }
+	if p.Rev != "" {
+		params["rev"] = p.Rev
+	}
 
-    file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), params, session.GET)
+	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), params, session.GET)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    // File metadata is in header, body is file
-    buf := bytes.NewBufferString(header.Get("x-dropbox-metadata"))
-    err = json.Unmarshal(buf.Bytes(), &m)
+	// File metadata is in header, body is file
+	buf := bytes.NewBufferString(header.Get("x-dropbox-metadata"))
+	err = json.Unmarshal(buf.Bytes(), &m)
 
-    return
+	return
 }
 
 // UploadFile uploads the file to the specified path.  The file's metadata is
 // returned as a result.
 func UploadFile(s session.Session, file []byte, uri api.Uri, p *Parameters) (m Metadata, err error) {
 
-    // Upload method requires that all params are sent in the query string, so we'll set them up here rather
-    // than letting the session set them
-    var buf bytes.Buffer
-    buf.WriteString(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path))
+	// Upload method requires that all params are sent in the query string, so we'll set them up here rather
+	// than letting the session set them
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path))
 
-    if p != nil {
-        fmt.Fprint(&buf, "?")
+	if p != nil {
+		fmt.Fprint(&buf, "?")
 
-        if p.Locale != "" {
-            fmt.Fprintf(&buf, "&locale=%s", p.Locale)
-        }
+		if p.Locale != "" {
+			fmt.Fprintf(&buf, "&locale=%s", p.Locale)
+		}
 
-        if p.Overwrite != "" {
-            fmt.Fprintf(&buf, "&overwrite=%s", p.Overwrite)
-        }
+		if p.Overwrite != "" {
+			fmt.Fprintf(&buf, "&overwrite=%s", p.Overwrite)
+		}
 
-        if p.ParentRev != "" {
-            fmt.Fprintf(&buf, "&parent_rev=%s", p.ParentRev)
-        }
-    }
+		if p.ParentRev != "" {
+			fmt.Fprintf(&buf, "&parent_rev=%s", p.ParentRev)
+		}
+	}
 
-    body, _, err := s.MakeUploadRequest(buf.String(), nil, session.PUT, file)
+	body, _, err := s.MakeUploadRequest(buf.String(), nil, session.PUT, file)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &m)
+	err = json.Unmarshal(body, &m)
 
-    return
+	return
 }
 
 // GetMetadata returns the metadata for the specified path.
 func GetMetadata(s session.Session, uri api.Uri, p *Parameters) (m Metadata, err error) {
-    params := make(map[string]string)
+	params := make(map[string]string)
 
-    if p != nil {
-        if p.FileLimit != "" {
-            params["file_limit"] = p.FileLimit
-        }
+	if p != nil {
+		if p.FileLimit != "" {
+			params["file_limit"] = p.FileLimit
+		}
 
-        if p.Hash != "" {
-            params["hash"] = p.Hash
-        }
+		if p.Hash != "" {
+			params["hash"] = p.Hash
+		}
 
-        if p.List != "" {
-            params["list"] = p.List
-        }
+		if p.List != "" {
+			params["list"] = p.List
+		}
 
-        if p.IncludeDeleted != "" {
-            params["include_deleted"] = p.IncludeDeleted
-        }
+		if p.IncludeDeleted != "" {
+			params["include_deleted"] = p.IncludeDeleted
+		}
 
-        if p.Rev != "" {
-            params["rev"] = p.Rev
-        }
+		if p.Rev != "" {
+			params["rev"] = p.Rev
+		}
 
-        if p.Locale != "" {
-            params["locale"] = p.Locale
-        }
-    }
+		if p.Locale != "" {
+			params["locale"] = p.Locale
+		}
+	}
 
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), params, session.GET)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), params, session.GET)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &m)
+	err = json.Unmarshal(body, &m)
 
-    return
+	return
 }
 
-func GetRevisions(s session.Session, uri api.Uri, p *Parameters) (m []Revision, err error) {
-    params := make(map[string]string)
+// Returns file delta information for the application directory (Incomplete)
+func GetDelta(s session.Session, p *Parameters) (d Delta, err error) {
+	params := make(map[string]string)
 
-    if p != nil {
-        if p.RevLimit != "" {
-            params["rev_limit"] = p.RevLimit
-        }
+	if p != nil {
+		if p.Cursor != "" {
+			params["cursor"] = p.Cursor
+		}
 
-        if p.Locale != "" {
-            params["locale"] = p.Locale
-        }
-    }
+		if p.Locale != "" {
+			params["locale"] = p.Locale
+		}
+	}
 
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), params, session.GET)
+	body, _, err := s.MakeApiRequest("delta", params, session.POST)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &m)
+	err = json.Unmarshal(body, &d)
 
-    return
+	return
+}
+
+func Revisions(s session.Session, uri api.Uri, p *Parameters) (m []Revision, err error) {
+	params := make(map[string]string)
+
+	if p != nil {
+		if p.RevLimit != "" {
+			params["rev_limit"] = p.RevLimit
+		}
+
+		if p.Locale != "" {
+			params["locale"] = p.Locale
+		}
+	}
+
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), params, session.GET)
+
+	if err != nil {
+		return
+	}
+
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
+
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
+
+	err = json.Unmarshal(body, &m)
+
+	return
 }
 
 func RestoreFile(s session.Session, uri api.Uri, rev string, p *Parameters) (m Metadata, err error) {
-    params := map[string]string {
-        "rev": rev,
-    }
+	params := map[string]string{
+		"rev": rev,
+	}
 
-    if p != nil {
-        if p.Locale != "" {
-            params["locale"] = p.Locale
-        }
-    }
+	if p != nil {
+		if p.Locale != "" {
+			params["locale"] = p.Locale
+		}
+	}
 
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s", uri.Root, uri.Path), params, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s", uri.Root, uri.Path), params, session.POST)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &m)
+	err = json.Unmarshal(body, &m)
 
-    return
+	return
 }
 
 func Search(s session.Session, uri api.Uri, query string) (m []Revision, err error) {
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), nil, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), nil, session.POST)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &m)
+	err = json.Unmarshal(body, &m)
 
-    return
+	return
 }
 
 func Share(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error) {
-    params := make(map[string]string)
+	params := make(map[string]string)
 
-    if p != nil {
-        if p.Locale != "" {
-            params["locale"] = p.Locale
-        }
+	if p != nil {
+		if p.Locale != "" {
+			params["locale"] = p.Locale
+		}
 
-        if p.ShortUrl != "" {
-            params["short_url"] = p.ShortUrl
-        }
-    }
+		if p.ShortUrl != "" {
+			params["short_url"] = p.ShortUrl
+		}
+	}
 
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), params, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), params, session.POST)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &u)
+	err = json.Unmarshal(body, &u)
 
-    return
+	return
 }
 
 func Media(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error) {
-    params := make(map[string]string)
+	params := make(map[string]string)
 
-    if p != nil {
-        if p.Locale != "" {
-            params["locale"] = p.Locale
-        }
-    }
+	if p != nil {
+		if p.Locale != "" {
+			params["locale"] = p.Locale
+		}
+	}
 
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), params, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), params, session.POST)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &u)
+	err = json.Unmarshal(body, &u)
 
-    return
+	return
 }
 
 func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
-    body, _, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), nil, session.GET)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), nil, session.GET)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    var fe FileError
-    err = json.Unmarshal(body, &fe)
+	var fe FileError
+	err = json.Unmarshal(body, &fe)
 
-    if fe.ErrorText != "" {
-        err = fe
-        return
-    }
+	if fe.ErrorText != "" {
+		err = fe
+		return
+	}
 
-    err = json.Unmarshal(body, &c)
+	err = json.Unmarshal(body, &c)
 
-    return
+	return
 }
 
 func Thumbnail(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Metadata, err error) {
-    params := make(map[string]string)
+	params := make(map[string]string)
 
-    if p != nil {
-        if p.Format != "" {
-            params["format"] = p.Format
-        }
+	if p != nil {
+		if p.Format != "" {
+			params["format"] = p.Format
+		}
 
-        if p.Size != "" {
-            params["size"] = p.Size
-        }
-    }
+		if p.Size != "" {
+			params["size"] = p.Size
+		}
+	}
 
-    file, header, err := s.MakeContentApiRequest(fmt.Sprintf("thumbnails/%s/%s", uri.Root, uri.Path), params, session.GET)
+	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("thumbnails/%s/%s", uri.Root, uri.Path), params, session.GET)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    // File metadata is in header, body is file
-    buf := bytes.NewBufferString(header.Get("x-dropbox-metadata"))
-    err = json.Unmarshal(buf.Bytes(), &m)
+	// File metadata is in header, body is file
+	buf := bytes.NewBufferString(header.Get("x-dropbox-metadata"))
+	err = json.Unmarshal(buf.Bytes(), &m)
 
-    return
+	return
 }

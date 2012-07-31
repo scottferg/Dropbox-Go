@@ -1,11 +1,11 @@
 package api
 
 const (
-    RootSandbox = "sandbox"
-    RootDropbox = "dropbox"
+	RootSandbox = "sandbox"
+	RootDropbox = "dropbox"
 )
 
 type Uri struct {
-    Root string
-    Path string
+	Root string
+	Path string
 }
