@@ -2,22 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/scottferg/Dropbox-Go"
+	"github.com/scottferg/Dropbox-Go/dropbox"
 )
 
 func main() {
-	s := session.Session{
+	s := dropbox.Session{
 		AppKey:     "APP_KEY",
 		AppSecret:  "APP_SECRET",
 		AccessType: "app_folder",
-		Token: session.AccessToken{
+		Token: dropbox.AccessToken{
 			Secret: "ACCESS_SECRET",
 			Key:    "ACCESS_KEY",
 		},
 	}
 
-	uriPath := api.Uri{
-		Root: api.RootSandbox,
+	uriPath := dropbox.Uri{
+		Root: dropbox.RootSandbox,
 		Path: "NERDS/test_form.pdf",
 	}
 
@@ -25,7 +25,7 @@ func main() {
 	if file, err := ioutil.ReadFile("./test_form.pdf"); err != nil {
 		fmt.Println(err.Error())
 	} else {
-		m, err := files.UploadFile(s, file, uriPath, nil)
+		m, err := dropbox.UploadFile(s, file, uriPath, nil)
 
 		if err != nil {
 			fmt.Println(err.Error())
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Download the file
-	if file, _, err := files.GetFile(s, uriPath, nil); err == nil {
+	if file, _, err := dropbox.GetFile(s, uriPath, nil); err == nil {
 		ioutil.WriteFile("./test_result.pdf", file, os.ModePerm)
 	} else {
 		fmt.Println(err.Error())
