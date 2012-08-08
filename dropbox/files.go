@@ -268,10 +268,8 @@ func RestoreFile(s Session, uri Uri, rev string, p *Parameters) (m Metadata, err
 		"rev": rev,
 	}
 
-	if p != nil {
-		if p.Locale != "" {
-			params["locale"] = p.Locale
-		}
+	if p != nil && p.Locale != "" {
+		params["locale"] = p.Locale
 	}
 
 	body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s", uri.Root, uri.Path), params, POST)
@@ -348,10 +346,8 @@ func Share(s Session, uri Uri, p *Parameters) (u ShareUrl, err error) {
 func Media(s Session, uri Uri, p *Parameters) (u ShareUrl, err error) {
 	params := make(map[string]string)
 
-	if p != nil {
-		if p.Locale != "" {
-			params["locale"] = p.Locale
-		}
+	if p != nil && p.Locale != "" {
+		params["locale"] = p.Locale
 	}
 
 	body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), params, POST)
