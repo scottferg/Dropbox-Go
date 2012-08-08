@@ -1,33 +1,15 @@
 // Package files provides API methods for managing and uploading
 // individual files
-package files
+package main
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/scottferg/Dropbox-Go/api"
-	"github.com/scottferg/Dropbox-Go/session"
 )
 
 type FileError struct {
 	ErrorText string `json:"error"`
-}
-
-type Parameters struct {
-	Rev            string
-	Locale         string
-	Overwrite      string
-	ParentRev      string
-	FileLimit      string
-	Hash           string
-	List           string
-	Cursor         string
-	IncludeDeleted string
-	RevLimit       string
-	ShortUrl       string
-	Format         string
-	Size           string
 }
 
 type Contents struct {
@@ -103,14 +85,14 @@ func (e FileError) Error() string {
 
 // GetFile retrieves the metadata for the file at the specified path,
 // or the metadata for that path.
-func GetFile(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Metadata, err error) {
+func GetFile(s Session, uri Uri, p *Parameters) (file []byte, m Metadata, err error) {
 	params := make(map[string]string)
 
 	if p.Rev != "" {
 		params["rev"] = p.Rev
 	}
 
-	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), params, session.GET)
+	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), params, GET)
 
 	if err != nil {
 		return
@@ -125,10 +107,10 @@ func GetFile(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Meta
 
 // UploadFile uploads the file to the specified path.  The file's metadata is
 // returned as a result.
-func UploadFile(s session.Session, file []byte, uri api.Uri, p *Parameters) (m Metadata, err error) {
+func UploadFile(s Session, file []byte, uri Uri, p *Parameters) (m Metadata, err error) {
 
 	// Upload method requires that all params are sent in the query string, so we'll set them up here rather
-	// than letting the session set them
+	// than letting the set them
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("files_put/%s/%s", uri.Root, uri.Path))
 
@@ -148,7 +130,7 @@ func UploadFile(s session.Session, file []byte, uri api.Uri, p *Parameters) (m M
 		}
 	}
 
-	body, _, err := s.MakeUploadRequest(buf.String(), nil, session.PUT, file)
+	body, _, err := s.MakeUploadRequest(buf.String(), nil, PUT, file)
 
 	if err != nil {
 		return
@@ -168,7 +150,7 @@ func UploadFile(s session.Session, file []byte, uri api.Uri, p *Parameters) (m M
 }
 
 // GetMetadata returns the metadata for the specified path.
-func GetMetadata(s session.Session, uri api.Uri, p *Parameters) (m Metadata, err error) {
+func GetMetadata(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -197,7 +179,7 @@ func GetMetadata(s session.Session, uri api.Uri, p *Parameters) (m Metadata, err
 		}
 	}
 
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), params, session.GET)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("metadata/%s/%s", uri.Root, uri.Path), params, GET)
 
 	if err != nil {
 		return
@@ -217,7 +199,7 @@ func GetMetadata(s session.Session, uri api.Uri, p *Parameters) (m Metadata, err
 }
 
 // Returns file delta information for the application directory (Incomplete)
-func GetDelta(s session.Session, p *Parameters) (d Delta, err error) {
+func GetDelta(s Session, p *Parameters) (d Delta, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -230,7 +212,7 @@ func GetDelta(s session.Session, p *Parameters) (d Delta, err error) {
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("delta", params, session.POST)
+	body, _, err := s.MakeApiRequest("delta", params, POST)
 
 	if err != nil {
 		return
@@ -249,7 +231,7 @@ func GetDelta(s session.Session, p *Parameters) (d Delta, err error) {
 	return
 }
 
-func Revisions(s session.Session, uri api.Uri, p *Parameters) (m []Revision, err error) {
+func GetRevisions(s Session, uri Uri, p *Parameters) (m []Revision, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -262,7 +244,7 @@ func Revisions(s session.Session, uri api.Uri, p *Parameters) (m []Revision, err
 		}
 	}
 
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), params, session.GET)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("revisions/%s/%s", uri.Root, uri.Path), params, GET)
 
 	if err != nil {
 		return
@@ -281,7 +263,7 @@ func Revisions(s session.Session, uri api.Uri, p *Parameters) (m []Revision, err
 	return
 }
 
-func RestoreFile(s session.Session, uri api.Uri, rev string, p *Parameters) (m Metadata, err error) {
+func RestoreFile(s Session, uri Uri, rev string, p *Parameters) (m Metadata, err error) {
 	params := map[string]string{
 		"rev": rev,
 	}
@@ -292,7 +274,7 @@ func RestoreFile(s session.Session, uri api.Uri, rev string, p *Parameters) (m M
 		}
 	}
 
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s", uri.Root, uri.Path), params, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("restore/%s/%s", uri.Root, uri.Path), params, POST)
 
 	if err != nil {
 		return
@@ -311,8 +293,8 @@ func RestoreFile(s session.Session, uri api.Uri, rev string, p *Parameters) (m M
 	return
 }
 
-func Search(s session.Session, uri api.Uri, query string) (m []Revision, err error) {
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), nil, session.POST)
+func Search(s Session, uri Uri, query string) (m []Revision, err error) {
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), nil, POST)
 
 	if err != nil {
 		return
@@ -331,7 +313,7 @@ func Search(s session.Session, uri api.Uri, query string) (m []Revision, err err
 	return
 }
 
-func Share(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error) {
+func Share(s Session, uri Uri, p *Parameters) (u ShareUrl, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -344,7 +326,7 @@ func Share(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error
 		}
 	}
 
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), params, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("shares/%s/%s", uri.Root, uri.Path), params, POST)
 
 	if err != nil {
 		return
@@ -363,7 +345,7 @@ func Share(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error
 	return
 }
 
-func Media(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error) {
+func Media(s Session, uri Uri, p *Parameters) (u ShareUrl, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -372,7 +354,7 @@ func Media(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error
 		}
 	}
 
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), params, session.POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("media/%s/%s", uri.Root, uri.Path), params, POST)
 
 	if err != nil {
 		return
@@ -391,8 +373,8 @@ func Media(s session.Session, uri api.Uri, p *Parameters) (u ShareUrl, err error
 	return
 }
 
-func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), nil, session.GET)
+func CopyRef(s Session, uri Uri) (c CopyHash, err error) {
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("copy_ref/%s/%s", uri.Root, uri.Path), nil, GET)
 
 	if err != nil {
 		return
@@ -411,7 +393,7 @@ func CopyRef(s session.Session, uri api.Uri) (c CopyHash, err error) {
 	return
 }
 
-func Thumbnail(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Metadata, err error) {
+func Thumbnail(s Session, uri Uri, p *Parameters) (file []byte, m Metadata, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -424,7 +406,7 @@ func Thumbnail(s session.Session, uri api.Uri, p *Parameters) (file []byte, m Me
 		}
 	}
 
-	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("thumbnails/%s/%s", uri.Root, uri.Path), params, session.GET)
+	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("thumbnails/%s/%s", uri.Root, uri.Path), params, GET)
 
 	if err != nil {
 		return

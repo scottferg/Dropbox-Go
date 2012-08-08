@@ -1,4 +1,4 @@
-package session
+package main
 
 import (
 	"bytes"
@@ -28,11 +28,6 @@ const (
 
 type AuthError struct {
 	ErrorText string `json:"error"`
-}
-
-type Parameters struct {
-	OAuthCallback string
-	Locale        string
 }
 
 type AccessToken struct {

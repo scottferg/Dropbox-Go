@@ -1,21 +1,10 @@
-package fileops
+package main
 
 import (
 	"encoding/json"
-	"github.com/scottferg/Dropbox-Go/api"
-	"github.com/scottferg/Dropbox-Go/files"
-	"github.com/scottferg/Dropbox-Go/session"
 )
 
-type Parameters struct {
-	Root        string
-	ToPath      string
-	FromPath    string
-	Locale      string
-	FromCopyRef string
-}
-
-func Copy(s session.Session, root string, to_path string, p *Parameters) (c files.Contents, err error) {
+func Copy(s Session, root string, to_path string, p *Parameters) (c Contents, err error) {
 	params := map[string]string{
 		"root":    root,
 		"to_path": to_path,
@@ -35,13 +24,13 @@ func Copy(s session.Session, root string, to_path string, p *Parameters) (c file
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("fileops/copy", params, session.POST)
+	body, _, err := s.MakeApiRequest("fileops/copy", params, POST)
 
 	if err != nil {
 		return
 	}
 
-	var fe files.FileError
+	var fe FileError
 	err = json.Unmarshal(body, &fe)
 
 	if fe.ErrorText != "" {
@@ -54,7 +43,7 @@ func Copy(s session.Session, root string, to_path string, p *Parameters) (c file
 	return
 }
 
-func CreateFolder(s session.Session, uri api.Uri, p *Parameters) (m files.Metadata, err error) {
+func CreateFolder(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 	params := map[string]string{
 		"root": uri.Root,
 		"path": uri.Path,
@@ -66,13 +55,13 @@ func CreateFolder(s session.Session, uri api.Uri, p *Parameters) (m files.Metada
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("fileops/create_folder", params, session.POST)
+	body, _, err := s.MakeApiRequest("fileops/create_folder", params, POST)
 
 	if err != nil {
 		return
 	}
 
-	var fe files.FileError
+	var fe FileError
 	err = json.Unmarshal(body, &fe)
 
 	if fe.ErrorText != "" {
@@ -85,7 +74,7 @@ func CreateFolder(s session.Session, uri api.Uri, p *Parameters) (m files.Metada
 	return
 }
 
-func Delete(s session.Session, uri api.Uri, p *Parameters) (m files.Metadata, err error) {
+func Delete(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 	params := map[string]string{
 		"root": uri.Root,
 		"path": uri.Path,
@@ -97,13 +86,13 @@ func Delete(s session.Session, uri api.Uri, p *Parameters) (m files.Metadata, er
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("fileops/delete", params, session.POST)
+	body, _, err := s.MakeApiRequest("fileops/delete", params, POST)
 
 	if err != nil {
 		return
 	}
 
-	var fe files.FileError
+	var fe FileError
 	err = json.Unmarshal(body, &fe)
 
 	if fe.ErrorText != "" {
@@ -116,7 +105,7 @@ func Delete(s session.Session, uri api.Uri, p *Parameters) (m files.Metadata, er
 	return
 }
 
-func Move(s session.Session, uri api.Uri, root string, from_path string, to_path string, p *Parameters) (m files.Metadata, err error) {
+func Move(s Session, uri Uri, root string, from_path string, to_path string, p *Parameters) (m Metadata, err error) {
 	params := map[string]string{
 		"root":      root,
 		"from_path": from_path,
@@ -129,13 +118,13 @@ func Move(s session.Session, uri api.Uri, root string, from_path string, to_path
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("fileops/move", params, session.POST)
+	body, _, err := s.MakeApiRequest("fileops/move", params, POST)
 
 	if err != nil {
 		return
 	}
 
-	var fe files.FileError
+	var fe FileError
 	err = json.Unmarshal(body, &fe)
 
 	if fe.ErrorText != "" {

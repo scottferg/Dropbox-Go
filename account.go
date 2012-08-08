@@ -1,13 +1,8 @@
-package account
+package main
 
 import (
 	"encoding/json"
-	"github.com/scottferg/Dropbox-Go/session"
 )
-
-type Parameters struct {
-	Locale string
-}
 
 type Account struct {
 	ReferralLink string `json:"referral_link"`
@@ -21,7 +16,7 @@ type Account struct {
 	} `json:"quota_info"`
 }
 
-func GetAccount(s session.Session, p *Parameters) (a Account, err error) {
+func GetAccount(s Session, p *Parameters) (a Account, err error) {
 	params := make(map[string]string)
 
 	if p != nil {
@@ -30,7 +25,7 @@ func GetAccount(s session.Session, p *Parameters) (a Account, err error) {
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("account/info", params, session.GET)
+	body, _, err := s.MakeApiRequest("account/info", params, GET)
 
 	if err != nil {
 		return

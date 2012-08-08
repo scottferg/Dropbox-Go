@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/scottferg/Dropbox-Go/api"
-	"github.com/scottferg/Dropbox-Go/files"
-	"github.com/scottferg/Dropbox-Go/session"
+	"github.com/scottferg/Dropbox-Go"
 )
 
 func main() {
