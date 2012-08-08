@@ -1,6 +1,6 @@
 // Package files provides API methods for managing and uploading
 // individual files
-package main
+package dropbox
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package main
+package dropbox
 
 import (
 	"encoding/json"

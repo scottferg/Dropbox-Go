@@ -1,4 +1,4 @@
-package main
+package dropbox
 
 const (
 	RootSandbox = "sandbox"
