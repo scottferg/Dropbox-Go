@@ -23,8 +23,8 @@ func Copy(s Session, root string, to_path string, p *Parameters) (c Contents, er
 			params["from_copy_ref"] = p.FromCopyRef
 		}
 	}
-
-	body, _, err := s.MakeApiRequest("fileops/copy", params, POST)
+	var body []byte
+	body, _, err = s.MakeApiRequest("fileops/copy", params, POST)
 
 	if err != nil {
 		return
@@ -54,8 +54,8 @@ func CreateFolder(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 			params["locale"] = p.Locale
 		}
 	}
-
-	body, _, err := s.MakeApiRequest("fileops/create_folder", params, POST)
+	var body []byte
+	body, _, err = s.MakeApiRequest("fileops/create_folder", params, POST)
 
 	if err != nil {
 		return
@@ -85,8 +85,9 @@ func Delete(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 			params["locale"] = p.Locale
 		}
 	}
-
-	body, _, err := s.MakeApiRequest("fileops/delete", params, POST)
+	
+	var body []byte
+	body, _, err = s.MakeApiRequest("fileops/delete", params, POST)
 
 	if err != nil {
 		return
@@ -118,7 +119,8 @@ func Move(s Session, uri Uri, root string, from_path string, to_path string, p *
 		}
 	}
 
-	body, _, err := s.MakeApiRequest("fileops/move", params, POST)
+	var body []byte
+	body, _, err = s.MakeApiRequest("fileops/move", params, POST)
 
 	if err != nil {
 		return

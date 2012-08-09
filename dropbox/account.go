@@ -24,8 +24,8 @@ func GetAccount(s Session, p *Parameters) (a Account, err error) {
 			params["locale"] = p.Locale
 		}
 	}
-
-	body, _, err := s.MakeApiRequest("account/info", params, GET)
+	var body []byte
+	body, _, err = s.MakeApiRequest("account/info", params, GET)
 
 	if err != nil {
 		return
