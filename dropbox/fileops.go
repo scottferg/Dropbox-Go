@@ -49,10 +49,8 @@ func CreateFolder(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 		"path": uri.Path,
 	}
 
-	if p != nil {
-		if p.Locale != "" {
-			params["locale"] = p.Locale
-		}
+	if p != nil && p.Locale != "" {
+		params["locale"] = p.Locale
 	}
 
 	body, _, err := s.MakeApiRequest("fileops/create_folder", params, POST)
@@ -80,10 +78,8 @@ func Delete(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 		"path": uri.Path,
 	}
 
-	if p != nil {
-		if p.Locale != "" {
-			params["locale"] = p.Locale
-		}
+	if p != nil && p.Locale != "" {
+		params["locale"] = p.Locale
 	}
 
 	body, _, err := s.MakeApiRequest("fileops/delete", params, POST)
@@ -112,10 +108,8 @@ func Move(s Session, uri Uri, root string, from_path string, to_path string, p *
 		"to_path":   to_path,
 	}
 
-	if p != nil {
-		if p.Locale != "" {
-			params["locale"] = p.Locale
-		}
+	if p != nil && p.Locale != "" {
+		params["locale"] = p.Locale
 	}
 
 	body, _, err := s.MakeApiRequest("fileops/move", params, POST)
