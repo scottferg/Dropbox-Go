@@ -19,10 +19,8 @@ type Account struct {
 func GetAccount(s Session, p *Parameters) (a Account, err error) {
 	params := make(map[string]string)
 
-	if p != nil {
-		if p.Locale != "" {
-			params["locale"] = p.Locale
-		}
+	if p != nil && p.Locale != "" {
+		params["locale"] = p.Locale
 	}
 
 	body, _, err := s.MakeApiRequest("account/info", params, GET)
