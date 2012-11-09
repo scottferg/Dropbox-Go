@@ -73,14 +73,29 @@ type DeltaEntry struct {
 }
 
 type Delta struct {
-	Reset   bool         `json:"reset"`
-	HasMore bool         `json:"has_more"`
-	Cursor  string       `json:"cursor"`
-	Entries []DeltaEntry `json:"entries"`
+	Reset   bool          `json:"reset"`
+	HasMore bool          `json:"has_more"`
+	Cursor  string        `json:"cursor"`
+	Entries []interface{} `json:"entries"`
 }
 
 func (e FileError) Error() string {
 	return e.ErrorText
+}
+
+func NewMetadata(m map[string]interface{}) Metadata {
+	return Metadata{
+		Size:        m["size"].(string),
+		Bytes:       int(m["bytes"].(float64)),
+		ThumbExists: m["thumb_exists"].(bool),
+		Rev:         m["rev"].(string),
+		Modified:    m["modified"].(string),
+		Path:        m["path"].(string),
+		IsDir:       m["is_dir"].(bool),
+		Icon:        m["icon"].(string),
+		Root:        m["root"].(string),
+		Revision:    int(m["revision"].(float64)),
+	}
 }
 
 // GetFile retrieves the metadata for the file at the specified path,
@@ -227,6 +242,18 @@ func GetDelta(s Session, p *Parameters) (d Delta, err error) {
 	}
 
 	err = json.Unmarshal(body, &d)
+
+    // A bit hacky, but the interface types need to
+    // be converted to DeltaEntry types
+	for i, v := range d.Entries {
+		entry := v.([]interface{})
+
+		md := entry[1].(map[string]interface{})
+		d.Entries[i] = DeltaEntry{
+			Path:     entry[0].(string),
+			Metadata: NewMetadata(md),
+		}
+	}
 
 	return
 }
