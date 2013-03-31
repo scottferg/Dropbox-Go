@@ -243,8 +243,8 @@ func GetDelta(s Session, p *Parameters) (d Delta, err error) {
 
 	err = json.Unmarshal(body, &d)
 
-    // A bit hacky, but the interface types need to
-    // be converted to DeltaEntry types
+	// A bit hacky, but the interface types need to
+	// be converted to DeltaEntry types
 	for i, v := range d.Entries {
 		entry := v.([]interface{})
 
@@ -319,7 +319,7 @@ func RestoreFile(s Session, uri Uri, rev string, p *Parameters) (m Metadata, err
 }
 
 func Search(s Session, uri Uri, query string) (m []Revision, err error) {
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=", uri.Root, uri.Path, query), nil, POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=%s", uri.Root, uri.Path, query), nil, POST)
 
 	if err != nil {
 		return
