@@ -103,8 +103,10 @@ func NewMetadata(m map[string]interface{}) Metadata {
 func GetFile(s Session, uri Uri, p *Parameters) (file []byte, m Metadata, err error) {
 	params := make(map[string]string)
 
-	if p.Rev != "" {
-		params["rev"] = p.Rev
+	if p != nil {
+		if p.Rev != "" {
+			params["rev"] = p.Rev
+		}
 	}
 
 	file, header, err := s.MakeContentApiRequest(fmt.Sprintf("files/%s/%s", uri.Root, uri.Path), params, GET)
