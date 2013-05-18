@@ -64,7 +64,7 @@ func (e AuthError) Error() string {
 }
 
 func (s *Session) DoRequest(path string, params map[string]string, method string, file []byte) ([]byte, http.Header, error) {
-	if method == GET && params != nil {
+	if params != nil {
 		var buf bytes.Buffer
 
 		buf.WriteString(path)
@@ -75,20 +75,9 @@ func (s *Session) DoRequest(path string, params map[string]string, method string
 		}
 
 		path = buf.String()
-		fmt.Println(path)
 	}
 
 	req, err := http.NewRequest(method, path, nil)
-
-	if method == POST && params != nil {
-		form := make(url.Values)
-
-		for key, val := range params {
-			form.Set(key, val)
-		}
-
-		req.Form = form
-	}
 
 	var client http.Client
 

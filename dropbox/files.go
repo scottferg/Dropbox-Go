@@ -68,8 +68,8 @@ type CopyHash struct {
 }
 
 type DeltaEntry struct {
-	Path     string   `json:"0"`
-	Metadata Metadata `json:"1"`
+	Path     string    `json:"0"`
+	Metadata *Metadata `json:"1"`
 }
 
 type Delta struct {
@@ -83,8 +83,8 @@ func (e FileError) Error() string {
 	return e.ErrorText
 }
 
-func NewMetadata(m map[string]interface{}) Metadata {
-	return Metadata{
+func NewMetadata(m map[string]interface{}) *Metadata {
+	return &Metadata{
 		Size:        m["size"].(string),
 		Bytes:       int(m["bytes"].(float64)),
 		ThumbExists: m["thumb_exists"].(bool),
@@ -250,10 +250,15 @@ func GetDelta(s Session, p *Parameters) (d Delta, err error) {
 	for i, v := range d.Entries {
 		entry := v.([]interface{})
 
-		md := entry[1].(map[string]interface{})
+		var meta *Metadata = nil
+		if entry[1] != nil {
+			md := entry[1].(map[string]interface{})
+			meta = NewMetadata(md)
+		}
+
 		d.Entries[i] = DeltaEntry{
 			Path:     entry[0].(string),
-			Metadata: NewMetadata(md),
+			Metadata: meta,
 		}
 	}
 
