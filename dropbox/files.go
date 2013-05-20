@@ -8,6 +8,10 @@ import (
 	"fmt"
 )
 
+var (
+	dcount int
+)
+
 type FileError struct {
 	ErrorText string `json:"error"`
 }
@@ -215,6 +219,31 @@ func GetMetadata(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 	return
 }
 
+//
+// Function:           DeltaCount 
+//
+// Description:       This functon gives the number of delta changes received. It has to be
+//                            called after a GetDelta(). 
+//
+// Inputs:
+//
+func DeltaCount() int {
+	return dcount
+}
+
+//
+// Function:           IsCursorChanged 
+//
+// Description:       This function will compare the new cursor with the last 
+//                            received cursor to see if there were changes in the 
+//                             DropBox account.
+//
+// Inputs:
+//
+func IsDeltaChanged() bool {
+	return dcount > 0
+}
+
 // Returns file delta information for the application directory (Incomplete)
 func GetDelta(s Session, p *Parameters) (d Delta, err error) {
 	params := make(map[string]string)
@@ -244,6 +273,7 @@ func GetDelta(s Session, p *Parameters) (d Delta, err error) {
 	}
 
 	err = json.Unmarshal(body, &d)
+	dcount = len(d.Entries)
 
 	// A bit hacky, but the interface types need to
 	// be converted to DeltaEntry types
