@@ -326,7 +326,7 @@ func RestoreFile(s Session, uri Uri, rev string, p *Parameters) (m Metadata, err
 }
 
 func Search(s Session, uri Uri, query string) (m []Revision, err error) {
-	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=%s", uri.Root, uri.Path, query), nil, POST)
+	body, _, err := s.MakeApiRequest(fmt.Sprintf("search/%s/%s?query=%s", uri.Root, uri.Path, query), nil, GET)
 
 	if err != nil {
 		return
