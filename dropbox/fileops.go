@@ -101,7 +101,7 @@ func Delete(s Session, uri Uri, p *Parameters) (m Metadata, err error) {
 	return
 }
 
-func Move(s Session, uri Uri, root string, from_path string, to_path string, p *Parameters) (m Metadata, err error) {
+func Move(s Session, root string, from_path string, to_path string, p *Parameters) (m Metadata, err error) {
 	params := map[string]string{
 		"root":      root,
 		"from_path": from_path,
