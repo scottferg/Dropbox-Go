@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/scottferg/Dropbox-Go/dropbox"
+	"io/ioutil"
+	"os"
 )
 
 func main() {
@@ -25,7 +27,7 @@ func main() {
 	if file, err := ioutil.ReadFile("./test_form.pdf"); err != nil {
 		fmt.Println(err.Error())
 	} else {
-		m, err := dropbox.UploadFile(s, file, uriPath, nil)
+		_, err := dropbox.UploadFile(s, file, uriPath, nil)
 
 		if err != nil {
 			fmt.Println(err.Error())
