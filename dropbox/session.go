@@ -2,7 +2,6 @@ package dropbox
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -160,13 +159,6 @@ func (s *Session) ObtainAccessToken() (token string, err error) {
 
 	if err != nil {
 		return
-	}
-
-	var autherror AuthError
-	err = json.Unmarshal(body, &autherror)
-
-	if autherror.ErrorText != "" {
-		return token, autherror
 	}
 
 	tokens := strings.Split(string(body), "&")
