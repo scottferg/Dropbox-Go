@@ -87,7 +87,6 @@ func (s *Session) DoRequest(path string, params map[string]string, method string
 	}
 
 	auth := s.buildAuthHeader()
-	fmt.Println(auth)
 	req.Header.Set("Authorization", auth)
 
 	if file != nil {
