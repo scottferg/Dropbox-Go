@@ -35,10 +35,11 @@ type AccessToken struct {
 }
 
 type Session struct {
-	AppKey     string
-	AppSecret  string
-	AccessType string
-	Token      AccessToken
+	AppKey            string
+	AppSecret         string
+	AccessType        string
+	Oauth2AccessToken string
+	Token             AccessToken
 }
 
 type RequestToken struct {
@@ -86,7 +87,6 @@ func (s *Session) DoRequest(path string, params map[string]string, method string
 	}
 
 	auth := s.buildAuthHeader()
-
 	req.Header.Set("Authorization", auth)
 
 	if file != nil {
@@ -127,6 +127,10 @@ func (s *Session) MakeUploadRequest(path string, params map[string]string, metho
 func (s *Session) buildAuthHeader() string {
 	// https://gist.github.com/1671416
 	var buf bytes.Buffer
+	if s.Oauth2AccessToken != "" {
+		fmt.Fprintf(&buf, ` Bearer %s`, s.Oauth2AccessToken)
+		return buf.String()
+	}
 	buf.WriteString(`OAuth auth_version="1.0", oauth_signature_method="PLAINTEXT"`)
 	fmt.Fprintf(&buf, `, oauth_consumer_key="%s"`, url.QueryEscape(s.AppKey))
 	fmt.Fprintf(&buf, `, oauth_timestamp="%v"`, time.Now().Unix())
