@@ -147,13 +147,15 @@ func (s *Session) buildAuthHeader() string {
 }
 
 func (s *Session) ObtainRequestToken() (token string, err error) {
-	if body, _, err := s.MakeApiRequest("oauth/request_token", nil, POST); err != nil {
-		panic(err.Error())
-	} else {
-		tokens := strings.Split(string(body), "&")
-		s.Token.Secret = strings.Split(tokens[0], "=")[1]
-		s.Token.Key = strings.Split(tokens[1], "=")[1]
+	body, _, err := s.MakeApiRequest("oauth/request_token", nil, POST)
+
+	if err != nil {
+		return
 	}
+
+	tokens := strings.Split(string(body), "&")
+	s.Token.Secret = strings.Split(tokens[0], "=")[1]
+	s.Token.Key = strings.Split(tokens[1], "=")[1]
 
 	return
 }
