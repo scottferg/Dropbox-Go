@@ -147,7 +147,7 @@ func (s *Session) buildAuthHeader() string {
 	return buf.String()
 }
 
-func (s *Session) ObtainRequestToken() (token string, err error) {
+func (s *Session) ObtainRequestToken() (token RequestToken, err error) {
 	body, _, err := s.MakeApiRequest("oauth/request_token", nil, POST)
 
 	if err != nil {
@@ -158,10 +158,12 @@ func (s *Session) ObtainRequestToken() (token string, err error) {
 	s.Token.Secret = strings.Split(tokens[0], "=")[1]
 	s.Token.Key = strings.Split(tokens[1], "=")[1]
 
-	return
+	return RequestToken{
+		Key: s.Token.Key,
+		Secret: s.Token.Secret}, err
 }
 
-func (s *Session) ObtainAccessToken() (token string, err error) {
+func (s *Session) ObtainAccessToken() (token AccessToken, err error) {
 	body, _, err := s.MakeApiRequest("oauth/access_token", nil, POST)
 
 	if err != nil {
@@ -179,7 +181,9 @@ func (s *Session) ObtainAccessToken() (token string, err error) {
 	s.Token.Secret = strings.Split(tokens[0], "=")[1]
 	s.Token.Key = strings.Split(tokens[1], "=")[1]
 
-	return
+	return AccessToken{
+		Key: s.Token.Key,
+		Secret: s.Token.Secret}, err
 }
 
 func GenerateAuthorizeUrl(requestToken string, p *Parameters) (r string) {
